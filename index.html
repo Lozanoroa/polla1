@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Polla Colombiana - Registro</title>
   <style>
     body { 
@@ -10,62 +10,79 @@
       background: #f4f4f4; 
       padding: 15px; 
       margin: 0;
+      line-height: 1.5;
     }
     .container { 
-      max-width: 600px; 
+      max-width: 650px; 
       margin: auto; 
       background: white; 
-      padding: 25px; 
+      padding: 20px; 
       border-radius: 12px; 
       box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
     }
     h1 { 
       text-align: center; 
       color: #d32f2f; 
+      margin-bottom: 5px;
+    }
+    h2 { 
+      text-align: center; 
+      color: #333; 
     }
     label { 
       display: block; 
-      margin: 12px 0 5px; 
+      margin: 12px 0 6px; 
       font-weight: bold; 
+      color: #333;
     }
     input { 
       width: 100%; 
-      padding: 12px; 
+      padding: 14px; 
       font-size: 16px; 
       border: 1px solid #ccc; 
-      border-radius: 6px; 
+      border-radius: 8px; 
       box-sizing: border-box; 
+    }
+    input:focus {
+      border-color: #d32f2f;
+      outline: none;
     }
     button { 
       width: 100%; 
-      padding: 14px; 
+      padding: 16px; 
       background: #d32f2f; 
       color: white; 
       border: none; 
-      border-radius: 6px; 
-      font-size: 17px; 
-      margin-top: 15px; 
+      border-radius: 8px; 
+      font-size: 18px; 
+      font-weight: bold;
+      margin-top: 20px; 
       cursor: pointer; 
     }
-    button:hover { 
+    button:hover, button:active { 
       background: #b71c1c; 
     }
     .mensaje { 
       margin-top: 15px; 
       padding: 12px; 
-      border-radius: 6px; 
+      border-radius: 8px; 
       text-align: center; 
       font-weight: bold; 
+      font-size: 15px;
+    }
+    @media (max-width: 480px) {
+      .container { padding: 18px; }
+      input, button { font-size: 17px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🎟️ Polla Colombiana</h1>
+    <h1>🇰🇷 Polla Colombiana 🇰🇷 </h1>
     <h2>Registro de Venta</h2>
 
     <label>Serial de la Boleta:</label>
-    <input type="text" id="serial" placeholder="Ej: A-0456" onblur="buscarSerial()">
+    <input type="text" id="serial" placeholder="Ej: 1 - 1234" onblur="buscarSerial()">
 
     <label>Nombre del Joven que Vendió:</label>
     <input type="text" id="vendedor" placeholder="Ej: Juan Pérez">
@@ -82,8 +99,15 @@
   </div>
 
   <script>
-    // === TU URL YA PEGADA AQUÍ ===
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxVTPlyYSbBrDPMjpALbia5ejEJOIUOZRslMniOFG8VYuCrh332Q-I-jS7-qARfGu09/exec";
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyk6o2v-p1ISJFYQNpw8oBUbCYb5i2aPq7nh0XuqP07e9fWLmsgmxr8ilQmu43tK7_MDA/exec";
+
+    // Recordar nombre del vendedor
+    window.onload = function() {
+      const nombreGuardado = localStorage.getItem("nombreVendedor");
+      if (nombreGuardado) {
+        document.getElementById("vendedor").value = nombreGuardado;
+      }
+    };
 
     async function buscarSerial() {
       const serial = document.getElementById("serial").value.trim();
@@ -92,19 +116,19 @@
       try {
         const url = `${WEBAPP_URL}?action=buscar&serial=${encodeURIComponent(serial)}`;
         const res = await fetch(url);
-        const data = await res.json();
+        const text = await res.text();
+        const data = JSON.parse(text);
 
-        if (data && data.comprador) {
-          document.getElementById("comprador").value = data.comprador;
-          document.getElementById("telefono").value = data.telefono;
-          mostrarMensaje("✅ Datos autocompletados desde tu Google Sheet", "green");
+        if (data && (data.comprador || data.telefono)) {
+          document.getElementById("comprador").value = data.comprador || "";
+          document.getElementById("telefono").value = data.telefono || "";
+          mostrarMensaje("✅ Datos autocompletados correctamente", "green");
         } else {
-          mostrarMensaje("Serial nuevo - completa los datos manualmente", "orange");
-          document.getElementById("comprador").value = "";
-          document.getElementById("telefono").value = "";
+          mostrarMensaje("Serial nuevo - Ingresa los datos manualmente", "orange");
         }
       } catch(e) {
-        mostrarMensaje("Error de conexión. Revisa tu internet.", "red");
+        mostrarMensaje("Error al buscar. Verifica tu internet.", "red");
+        console.error(e);
       }
     }
 
@@ -122,7 +146,7 @@
       const telefono = document.getElementById("telefono").value.trim();
 
       if (!serial || !vendedor || !comprador || !telefono) {
-        alert("Por favor completa todos los campos");
+        alert("⚠️ Por favor completa todos los campos");
         return;
       }
 
@@ -131,23 +155,28 @@
       try {
         const res = await fetch(WEBAPP_URL, {
           method: "POST",
-          body: JSON.stringify(datos),
-          headers: { "Content-Type": "application/json" }
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(datos)
         });
 
-        if (res.ok) {
-          mostrarMensaje("✅ Venta registrada correctamente en tu Google Sheet", "green");
+        const respuesta = await res.text();
+
+        if (res.ok && respuesta.includes("OK")) {
+          mostrarMensaje("✅ ¡Venta registrada correctamente en tu Google Sheet!", "green");
           
-          // Limpiar formulario después de registrar
+          // Guardar nombre del vendedor para la próxima vez
+          localStorage.setItem("nombreVendedor", vendedor);
+
+          // Limpiar campos
           document.getElementById("serial").value = "";
           document.getElementById("comprador").value = "";
           document.getElementById("telefono").value = "";
-          // No limpiamos el nombre del vendedor para que no tenga que escribirlo cada vez
         } else {
           mostrarMensaje("Error al registrar la venta", "red");
         }
       } catch(e) {
-        mostrarMensaje("Error de conexión. Revisa tu internet.", "red");
+        mostrarMensaje("Error de conexión. Revisa tu internet y vuelve a intentar.", "red");
+        console.error(e);
       }
     }
   </script>
