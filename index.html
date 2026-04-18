@@ -5,84 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Polla Colombiana - Registro</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background: #f4f4f4; 
-      padding: 15px; 
-      margin: 0;
-      line-height: 1.5;
-    }
-    .container { 
-      max-width: 650px; 
-      margin: auto; 
-      background: white; 
-      padding: 20px; 
-      border-radius: 12px; 
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-    }
-    h1 { 
-      text-align: center; 
-      color: #d32f2f; 
-      margin-bottom: 5px;
-    }
-    h2 { 
-      text-align: center; 
-      color: #333; 
-    }
-    label { 
-      display: block; 
-      margin: 12px 0 6px; 
-      font-weight: bold; 
-      color: #333;
-    }
-    input { 
-      width: 100%; 
-      padding: 14px; 
-      font-size: 16px; 
-      border: 1px solid #ccc; 
-      border-radius: 8px; 
-      box-sizing: border-box; 
-    }
-    input:focus {
-      border-color: #d32f2f;
-      outline: none;
-    }
-    button { 
-      width: 100%; 
-      padding: 16px; 
-      background: #d32f2f; 
-      color: white; 
-      border: none; 
-      border-radius: 8px; 
-      font-size: 18px; 
-      font-weight: bold;
-      margin-top: 20px; 
-      cursor: pointer; 
-    }
-    button:hover, button:active { 
-      background: #b71c1c; 
-    }
-    .mensaje { 
-      margin-top: 15px; 
-      padding: 12px; 
-      border-radius: 8px; 
-      text-align: center; 
-      font-weight: bold; 
-      font-size: 15px;
-    }
-    @media (max-width: 480px) {
-      .container { padding: 18px; }
-      input, button { font-size: 17px; }
-    }
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 15px; margin: 0; }
+    .container { max-width: 650px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #d32f2f; }
+    label { display: block; margin: 12px 0 6px; font-weight: bold; }
+    input { width: 100%; padding: 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+    button { width: 100%; padding: 16px; background: #d32f2f; color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; margin-top: 20px; cursor: pointer; }
+    .mensaje { margin-top: 15px; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🇰🇷 Polla Colombiana 🇰🇷 </h1>
+    <h1>🎟️ Polla Colombiana</h1>
     <h2>Registro de Venta</h2>
 
     <label>Serial de la Boleta:</label>
-    <input type="text" id="serial" placeholder="Ej: 1 - 1234" onblur="buscarSerial()">
+    <input type="text" id="serial" placeholder="Ej: A-0456" onblur="buscarSerial()">
 
     <label>Nombre del Joven que Vendió:</label>
     <input type="text" id="vendedor" placeholder="Ej: Juan Pérez">
@@ -102,33 +40,33 @@
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyk6o2v-p1ISJFYQNpw8oBUbCYb5i2aPq7nh0XuqP07e9fWLmsgmxr8ilQmu43tK7_MDA/exec";
 
     // Recordar nombre del vendedor
-    window.onload = function() {
-      const nombreGuardado = localStorage.getItem("nombreVendedor");
-      if (nombreGuardado) {
-        document.getElementById("vendedor").value = nombreGuardado;
-      }
+    window.onload = () => {
+      const nombre = localStorage.getItem("nombreVendedor");
+      if (nombre) document.getElementById("vendedor").value = nombre;
     };
 
     async function buscarSerial() {
       const serial = document.getElementById("serial").value.trim();
       if (!serial) return;
 
+      mostrarMensaje("Buscando datos...", "orange");
+
       try {
         const url = `${WEBAPP_URL}?action=buscar&serial=${encodeURIComponent(serial)}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { method: 'GET' });
         const text = await res.text();
         const data = JSON.parse(text);
 
-        if (data && (data.comprador || data.telefono)) {
-          document.getElementById("comprador").value = data.comprador || "";
+        if (data && data.comprador) {
+          document.getElementById("comprador").value = data.comprador;
           document.getElementById("telefono").value = data.telefono || "";
           mostrarMensaje("✅ Datos autocompletados correctamente", "green");
         } else {
           mostrarMensaje("Serial nuevo - Ingresa los datos manualmente", "orange");
         }
       } catch(e) {
-        mostrarMensaje("Error al buscar. Verifica tu internet.", "red");
         console.error(e);
+        mostrarMensaje("❌ Error al buscar el serial. Prueba registrando directamente.", "red");
       }
     }
 
@@ -146,37 +84,35 @@
       const telefono = document.getElementById("telefono").value.trim();
 
       if (!serial || !vendedor || !comprador || !telefono) {
-        alert("⚠️ Por favor completa todos los campos");
+        alert("Por favor completa todos los campos");
         return;
       }
 
-      const datos = { serial, vendedor, comprador, telefono };
+      mostrarMensaje("Registrando venta...", "orange");
 
       try {
         const res = await fetch(WEBAPP_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(datos)
+          body: JSON.stringify({ serial, vendedor, comprador, telefono })
         });
 
         const respuesta = await res.text();
 
-        if (res.ok && respuesta.includes("OK")) {
-          mostrarMensaje("✅ ¡Venta registrada correctamente en tu Google Sheet!", "green");
-          
-          // Guardar nombre del vendedor para la próxima vez
+        if (res.ok) {
+          mostrarMensaje("✅ Venta registrada correctamente en tu Google Sheet!", "green");
           localStorage.setItem("nombreVendedor", vendedor);
-
+          
           // Limpiar campos
           document.getElementById("serial").value = "";
           document.getElementById("comprador").value = "";
           document.getElementById("telefono").value = "";
         } else {
-          mostrarMensaje("Error al registrar la venta", "red");
+          mostrarMensaje("Error al registrar: " + respuesta, "red");
         }
       } catch(e) {
-        mostrarMensaje("Error de conexión. Revisa tu internet y vuelve a intentar.", "red");
         console.error(e);
+        mostrarMensaje("❌ Error de conexión al registrar. Verifica tu internet.", "red");
       }
     }
   </script>
