@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polla Colombiana - Registro</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #f4f4f4; 
+      padding: 15px; 
+      margin: 0;
+    }
+    .container { 
+      max-width: 600px; 
+      margin: auto; 
+      background: white; 
+      padding: 25px; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+    }
+    h1 { 
+      text-align: center; 
+      color: #d32f2f; 
+    }
+    label { 
+      display: block; 
+      margin: 12px 0 5px; 
+      font-weight: bold; 
+    }
+    input { 
+      width: 100%; 
+      padding: 12px; 
+      font-size: 16px; 
+      border: 1px solid #ccc; 
+      border-radius: 6px; 
+      box-sizing: border-box; 
+    }
+    button { 
+      width: 100%; 
+      padding: 14px; 
+      background: #d32f2f; 
+      color: white; 
+      border: none; 
+      border-radius: 6px; 
+      font-size: 17px; 
+      margin-top: 15px; 
+      cursor: pointer; 
+    }
+    button:hover { 
+      background: #b71c1c; 
+    }
+    .mensaje { 
+      margin-top: 15px; 
+      padding: 12px; 
+      border-radius: 6px; 
+      text-align: center; 
+      font-weight: bold; 
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎟️ Polla Colombiana</h1>
+    <h2>Registro de Venta</h2>
+
+    <label>Serial de la Boleta:</label>
+    <input type="text" id="serial" placeholder="Ej: A-0456" onblur="buscarSerial()">
+
+    <label>Nombre del Joven que Vendió:</label>
+    <input type="text" id="vendedor" placeholder="Ej: Juan Pérez">
+
+    <label>Nombre del Comprador:</label>
+    <input type="text" id="comprador" placeholder="Se autocompletará si existe">
+
+    <label>Número de Teléfono del Comprador:</label>
+    <input type="tel" id="telefono" placeholder="Se autocompletará si existe">
+
+    <button onclick="registrar()">✅ Registrar Venta</button>
+
+    <div id="mensaje" class="mensaje"></div>
+  </div>
+
+  <script>
+    // === TU URL YA PEGADA AQUÍ ===
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxVTPlyYSbBrDPMjpALbia5ejEJOIUOZRslMniOFG8VYuCrh332Q-I-jS7-qARfGu09/exec";
+
+    async function buscarSerial() {
+      const serial = document.getElementById("serial").value.trim();
+      if (!serial) return;
+
+      try {
+        const url = `${WEBAPP_URL}?action=buscar&serial=${encodeURIComponent(serial)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data && data.comprador) {
+          document.getElementById("comprador").value = data.comprador;
+          document.getElementById("telefono").value = data.telefono;
+          mostrarMensaje("✅ Datos autocompletados desde tu Google Sheet", "green");
+        } else {
+          mostrarMensaje("Serial nuevo - completa los datos manualmente", "orange");
+          document.getElementById("comprador").value = "";
+          document.getElementById("telefono").value = "";
+        }
+      } catch(e) {
+        mostrarMensaje("Error de conexión. Revisa tu internet.", "red");
+      }
+    }
+
+    function mostrarMensaje(texto, color) {
+      const msg = document.getElementById("mensaje");
+      msg.textContent = texto;
+      msg.style.background = color === "green" ? "#d4edda" : color === "orange" ? "#fff3cd" : "#f8d7da";
+      msg.style.color = color === "green" ? "#155724" : color === "orange" ? "#856404" : "#721c24";
+    }
+
+    async function registrar() {
+      const serial = document.getElementById("serial").value.trim();
+      const vendedor = document.getElementById("vendedor").value.trim();
+      const comprador = document.getElementById("comprador").value.trim();
+      const telefono = document.getElementById("telefono").value.trim();
+
+      if (!serial || !vendedor || !comprador || !telefono) {
+        alert("Por favor completa todos los campos");
+        return;
+      }
+
+      const datos = { serial, vendedor, comprador, telefono };
+
+      try {
+        const res = await fetch(WEBAPP_URL, {
+          method: "POST",
+          body: JSON.stringify(datos),
+          headers: { "Content-Type": "application/json" }
+        });
+
+        if (res.ok) {
+          mostrarMensaje("✅ Venta registrada correctamente en tu Google Sheet", "green");
+          
+          // Limpiar formulario después de registrar
+          document.getElementById("serial").value = "";
+          document.getElementById("comprador").value = "";
+          document.getElementById("telefono").value = "";
+          // No limpiamos el nombre del vendedor para que no tenga que escribirlo cada vez
+        } else {
+          mostrarMensaje("Error al registrar la venta", "red");
+        }
+      } catch(e) {
+        mostrarMensaje("Error de conexión. Revisa tu internet.", "red");
+      }
+    }
+  </script>
+</body>
+</html>
